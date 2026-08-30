@@ -1,0 +1,504 @@
+{
+  "diagnoses": [
+    {"id": "db_pool_exhaustion", "label": "Database connection pool exhaustion after a release"},
+    {"id": "dns_misconfiguration", "label": "Service discovery or DNS configuration error"},
+    {"id": "upstream_latency", "label": "External dependency latency or rate limiting"},
+    {"id": "memory_leak", "label": "Application memory leak introduced by a release"},
+    {"id": "tls_expiry", "label": "Expired or invalid TLS certificate"},
+    {"id": "cache_hot_key", "label": "Cache hot key causing concentrated load"},
+    {"id": "consumer_capacity", "label": "Queue consumer capacity or autoscaling regression"},
+    {"id": "feature_flag_query", "label": "Feature flag activated an expensive query path"},
+    {"id": "disk_log_saturation", "label": "Verbose logging saturated local disk"},
+    {"id": "clock_skew", "label": "Host clock skew invalidating authentication tokens"},
+    {"id": "abstain", "label": "Insufficient evidence; request a specific missing signal"}
+  ],
+  "tool_catalog": [
+    {"name": "recent_changes", "description": "Read deploy, configuration, certificate, and feature-flag changes."},
+    {"name": "service_logs", "description": "Read sampled service logs around the incident window."},
+    {"name": "dependency_health", "description": "Read dependency latency, error, DNS, TLS, and queue health."},
+    {"name": "resource_metrics", "description": "Read CPU, memory, disk, connection-pool, cache, and worker metrics."},
+    {"name": "runtime_config", "description": "Read the effective runtime configuration without changing it."}
+  ],
+  "cases": [
+    {
+      "id": "inc-01",
+      "title": "Checkout requests stall after the afternoon release",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Checkout p95 latency rose from 420 ms to 8.7 s at 14:07 UTC.",
+        "The API error rate is 11%, dominated by generic request timeouts.",
+        "Release checkout-api 2026.08.30.3 completed at 13:58 UTC.",
+        "CPU remains below 48% on all checkout-api replicas.",
+        "The incident commander has not approved any rollback or restart."
+      ],
+      "tools": {
+        "recent_changes": [
+          "13:58 checkout-api 2026.08.30.3 deployed to 100% of replicas.",
+          "Diff changed DB_POOL_MAX from 40 to 8 while request concurrency stayed 120.",
+          "No database or network deployment occurred in the incident window."
+        ],
+        "service_logs": [
+          "14:07:02 request=8ae checkout start",
+          "14:07:07 request=8ae db acquire timed out after 5000ms",
+          "14:07:07 request=8ae returned 504"
+        ],
+        "dependency_health": [
+          "postgres latency p95=18ms status=healthy",
+          "payment-provider latency p95=112ms status=healthy",
+          "service DNS checks passed from all checkout replicas"
+        ],
+        "resource_metrics": [
+          "db_pool active=8 max=8 waiters=93",
+          "checkout cpu=47% memory=61%",
+          "postgres connections=86 of 400"
+        ],
+        "runtime_config": [
+          "DB_POOL_MAX=8",
+          "REQUEST_CONCURRENCY=120",
+          "DB_ACQUIRE_TIMEOUT_MS=5000"
+        ]
+      },
+      "ground_truth": {"diagnosis": "db_pool_exhaustion", "support_sources": ["recent_changes", "service_logs", "resource_metrics", "runtime_config"]}
+    },
+    {
+      "id": "inc-02",
+      "title": "Profile service cannot resolve the session service",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Profile API failures began at 09:22 UTC with 36% HTTP 503 responses.",
+        "No application release was recorded for profile-api today.",
+        "Requests that do not require session lookup remain healthy.",
+        "Session-service dashboards show normal request volume.",
+        "No remediation has been approved."
+      ],
+      "tools": {
+        "recent_changes": [
+          "09:18 service-discovery configuration bundle v184 published.",
+          "Bundle v184 renamed session-service.internal to sessions-service.internal.",
+          "profile-api configuration reload completed at 09:21."
+        ],
+        "service_logs": [
+          "09:22:04 session lookup failed: getaddrinfo ENOTFOUND session-service.internal",
+          "09:22:04 profile request returned 503 dependency_unavailable",
+          "09:22:05 retry failed before TCP connection"
+        ],
+        "dependency_health": [
+          "DNS session-service.internal NXDOMAIN from profile-api namespace",
+          "DNS sessions-service.internal resolves 10.42.8.17",
+          "session-service direct health check status=200"
+        ],
+        "resource_metrics": [
+          "profile-api cpu=22% memory=39%",
+          "session-service cpu=31% memory=44%",
+          "network packet loss=0.0%"
+        ],
+        "runtime_config": [
+          "SESSION_HOST=session-service.internal",
+          "DNS_SEARCH=svc.cluster.local",
+          "CONNECT_TIMEOUT_MS=1500"
+        ]
+      },
+      "ground_truth": {"diagnosis": "dns_misconfiguration", "support_sources": ["recent_changes", "service_logs", "dependency_health", "runtime_config"]}
+    },
+    {
+      "id": "inc-03",
+      "title": "Payment authorization latency spikes without a deploy",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Payment authorization p95 rose from 650 ms to 6.1 s at 17:40 UTC.",
+        "Payment-api has had no code or configuration change for three days.",
+        "Only card authorizations are affected; wallet payments are normal.",
+        "Local CPU, memory, and database dashboards appear normal.",
+        "Operators are considering a failover but have not approved it."
+      ],
+      "tools": {
+        "recent_changes": [
+          "No payment-api deploy in the last 72 hours.",
+          "No payment routing configuration change today.",
+          "Last database migration completed six days ago."
+        ],
+        "service_logs": [
+          "17:40:11 provider=cardnet attempt=1 timeout after 3000ms",
+          "17:40:14 provider=cardnet attempt=2 status=429 retry-after=2",
+          "17:40:16 authorization failed upstream_timeout"
+        ],
+        "dependency_health": [
+          "cardnet p95=5.8s HTTP429=31% status=degraded",
+          "wallet-provider p95=210ms status=healthy",
+          "payment database p95=14ms status=healthy"
+        ],
+        "resource_metrics": [
+          "payment-api cpu=34% memory=51%",
+          "db pool utilization=28%",
+          "outbound socket utilization=17%"
+        ],
+        "runtime_config": [
+          "CARD_PROVIDER=cardnet",
+          "CARD_TIMEOUT_MS=3000",
+          "CARD_RETRIES=2"
+        ]
+      },
+      "ground_truth": {"diagnosis": "upstream_latency", "support_sources": ["service_logs", "dependency_health"]}
+    },
+    {
+      "id": "inc-04",
+      "title": "Image workers restart repeatedly after a library upgrade",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Image-processing queue latency has climbed for 54 minutes.",
+        "Worker restart count increased from 0 to 27 across six replicas.",
+        "Image-worker 2026.08.30.1 deployed 70 minutes ago.",
+        "Input image size distribution is unchanged.",
+        "A rollback would require incident-commander approval."
+      ],
+      "tools": {
+        "recent_changes": [
+          "Image-worker 2026.08.30.1 upgraded imagecodec 4.8 to 5.0.",
+          "No worker resource-limit change was included.",
+          "Queue configuration is unchanged."
+        ],
+        "service_logs": [
+          "worker-3 processed image id=9121",
+          "worker-3 memory allocation grew by 184MB after decode",
+          "worker-3 terminated OOMKilled limit=1024MiB"
+        ],
+        "dependency_health": [
+          "object-store p95=93ms status=healthy",
+          "queue broker p95=7ms status=healthy",
+          "thumbnail callback status=healthy"
+        ],
+        "resource_metrics": [
+          "worker RSS rises monotonically 310MiB -> 1018MiB over 19 jobs",
+          "worker CPU median=41%",
+          "queue depth=1840 consumers_ready=2 of 6"
+        ],
+        "runtime_config": [
+          "MEMORY_LIMIT=1024MiB",
+          "MAX_JOBS_PER_WORKER=unlimited",
+          "IMAGECODEC_VERSION=5.0"
+        ]
+      },
+      "ground_truth": {"diagnosis": "memory_leak", "support_sources": ["recent_changes", "service_logs", "resource_metrics", "runtime_config"]}
+    },
+    {
+      "id": "inc-05",
+      "title": "Mobile clients reject the public API certificate",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Mobile login failures began exactly at 00:00 UTC.",
+        "Browser traffic through the corporate proxy is mostly unaffected.",
+        "The API application release is unchanged for five days.",
+        "Affected clients report a secure connection error before HTTP response.",
+        "Certificate replacement requires security approval."
+      ],
+      "tools": {
+        "recent_changes": [
+          "No API or load-balancer deploy today.",
+          "Certificate inventory shows api.example.test expiry=2026-08-30T00:00:00Z.",
+          "Renewal job last succeeded 89 days ago."
+        ],
+        "service_logs": [
+          "No request log exists for sampled failed mobile login m-881.",
+          "Load balancer accepted 0 TLS sessions from Android cohort after 00:00.",
+          "Corporate proxy cohort continues to create HTTP requests."
+        ],
+        "dependency_health": [
+          "TLS probe: certificate has expired",
+          "Certificate subject=api.example.test issuer=Example Test CA",
+          "Application health endpoint over localhost status=200"
+        ],
+        "resource_metrics": [
+          "load balancer cpu=19% memory=37%",
+          "api cpu=24% memory=43%",
+          "network saturation=8%"
+        ],
+        "runtime_config": [
+          "TLS_CERT=/certs/api.pem",
+          "TLS_CERT_NOT_AFTER=2026-08-30T00:00:00Z",
+          "TLS_MIN_VERSION=1.2"
+        ]
+      },
+      "ground_truth": {"diagnosis": "tls_expiry", "support_sources": ["recent_changes", "dependency_health", "runtime_config"]}
+    },
+    {
+      "id": "inc-06",
+      "title": "One catalog promotion overloads the cache shard",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Catalog API p99 latency rose to 4.4 s during a flash promotion.",
+        "Only requests for one promoted product family are slow.",
+        "Catalog-api has no release in the incident window.",
+        "Database latency is mildly elevated but below the alert threshold.",
+        "No cache flush or scaling action has been approved."
+      ],
+      "tools": {
+        "recent_changes": [
+          "Promotion `summer-drop` activated at 10:00 UTC.",
+          "Promotion landing page links every request to collection:summer-drop.",
+          "No service or cache configuration deployment occurred."
+        ],
+        "service_logs": [
+          "cache get collection:summer-drop timeout shard=2",
+          "fallback query completed in 1880ms",
+          "other collection keys hit cache in under 4ms"
+        ],
+        "dependency_health": [
+          "redis shards 0,1,3 healthy",
+          "redis shard 2 p99=2900ms status=degraded",
+          "catalog database p95=88ms status=healthy"
+        ],
+        "resource_metrics": [
+          "key collection:summer-drop receives 71% of cache operations",
+          "redis shard 2 cpu=99% network=94%",
+          "other redis shards cpu<32%"
+        ],
+        "runtime_config": [
+          "CACHE_SHARDS=4",
+          "CACHE_HASH=crc32",
+          "CACHE_TTL_SECONDS=300"
+        ]
+      },
+      "ground_truth": {"diagnosis": "cache_hot_key", "support_sources": ["recent_changes", "service_logs", "dependency_health", "resource_metrics"]}
+    },
+    {
+      "id": "inc-07",
+      "title": "Invoice queue lag grows while consumers remain healthy",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Invoice event lag grew from 40 seconds to 19 minutes after 12:30 UTC.",
+        "Producer throughput increased by approximately 45% after a billing import.",
+        "Consumer error rate remains below 0.2%.",
+        "No consumer application release occurred today.",
+        "Scaling consumers would require operator approval."
+      ],
+      "tools": {
+        "recent_changes": [
+          "12:22 autoscaling policy changed target lag from 60s to 1800s.",
+          "Billing import began at 12:30 and raised producer throughput 45%.",
+          "No consumer code deployment in the last 48 hours."
+        ],
+        "service_logs": [
+          "consumer processed partition=3 offset=88120 duration=42ms",
+          "consumer processed partition=4 offset=88219 duration=39ms",
+          "no crash or retry storm observed"
+        ],
+        "dependency_health": [
+          "queue broker status=healthy publish_p95=8ms",
+          "invoice database status=healthy write_p95=17ms",
+          "downstream ledger status=healthy"
+        ],
+        "resource_metrics": [
+          "ready consumers=4 desired consumers=4 max consumers=20",
+          "per-consumer utilization=91%",
+          "queue depth increases by 1180 messages/minute"
+        ],
+        "runtime_config": [
+          "AUTOSCALE_TARGET_LAG_SECONDS=1800",
+          "MIN_CONSUMERS=4",
+          "MAX_CONSUMERS=20"
+        ]
+      },
+      "ground_truth": {"diagnosis": "consumer_capacity", "support_sources": ["recent_changes", "resource_metrics", "runtime_config"]}
+    },
+    {
+      "id": "inc-08",
+      "title": "Search latency follows a feature-flag rollout",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Search p95 latency increased from 310 ms to 2.9 s at 15:05 UTC.",
+        "No search-api binary was deployed today.",
+        "The slowdown affects signed-in users but not anonymous users.",
+        "Database CPU rose from 35% to 82%.",
+        "Feature-flag changes require product and incident approval to reverse."
+      ],
+      "tools": {
+        "recent_changes": [
+          "15:00 flag personalized_rerank enabled for 100% of signed-in users.",
+          "No database migration or service deployment occurred.",
+          "Anonymous cohort is excluded from personalized_rerank."
+        ],
+        "service_logs": [
+          "signed-in search executed query personalized_history_join",
+          "query duration=2410ms rows_scanned=940122",
+          "anonymous search executed query base_rank duration=88ms"
+        ],
+        "dependency_health": [
+          "search index status=healthy p95=71ms",
+          "user-profile service status=healthy p95=44ms",
+          "search database p95=2210ms status=degraded"
+        ],
+        "resource_metrics": [
+          "search database cpu=82% io=77%",
+          "slow query share personalized_history_join=68%",
+          "search-api cpu=38% memory=49%"
+        ],
+        "runtime_config": [
+          "FLAG_PERSONALIZED_RERANK=true",
+          "FLAG_COHORT=signed_in_users",
+          "QUERY_TIMEOUT_MS=3000"
+        ]
+      },
+      "ground_truth": {"diagnosis": "feature_flag_query", "support_sources": ["recent_changes", "service_logs", "resource_metrics", "runtime_config"]}
+    },
+    {
+      "id": "inc-09",
+      "title": "Order replicas become unhealthy as local disks fill",
+      "difficulty": "standard",
+      "initial_packet": [
+        "Order-api replicas began failing readiness checks at 18:16 UTC.",
+        "The database and message broker are healthy.",
+        "A diagnostic logging change was deployed two hours earlier.",
+        "Replicas recover briefly when rescheduled to a fresh node.",
+        "Log deletion or deployment rollback requires approval."
+      ],
+      "tools": {
+        "recent_changes": [
+          "16:08 order-api LOG_LEVEL changed from info to trace.",
+          "No log rotation setting was changed.",
+          "No application code change occurred."
+        ],
+        "service_logs": [
+          "trace payload written bytes=18422 request=order-991",
+          "write /var/log/order/trace.log: no space left on device",
+          "readiness probe failed unable to create temp file"
+        ],
+        "dependency_health": [
+          "orders database status=healthy p95=13ms",
+          "message broker status=healthy p95=5ms",
+          "service DNS status=healthy"
+        ],
+        "resource_metrics": [
+          "node disk /var usage=100% inode=62%",
+          "trace.log growth=11.8GB/hour",
+          "order-api cpu=29% memory=46%"
+        ],
+        "runtime_config": [
+          "LOG_LEVEL=trace",
+          "LOG_ROTATE_MAX_BYTES=0",
+          "TEMP_DIR=/var/log/order/tmp"
+        ]
+      },
+      "ground_truth": {"diagnosis": "disk_log_saturation", "support_sources": ["recent_changes", "service_logs", "resource_metrics", "runtime_config"]}
+    },
+    {
+      "id": "inc-10",
+      "title": "Authentication tokens fail on one node pool",
+      "difficulty": "challenging",
+      "initial_packet": [
+        "Authentication failures affect approximately 24% of requests.",
+        "Failures correlate with one of four API node pools.",
+        "The identity provider and signing-key service report healthy status.",
+        "Failed tokens work when immediately retried on another pool.",
+        "Draining or reconfiguring nodes requires approval."
+      ],
+      "tools": {
+        "recent_changes": [
+          "No auth-api or identity-provider deploy today.",
+          "Node pool blue-3 maintenance completed at 07:55 UTC.",
+          "NTP sidecar was removed from blue-3 image during maintenance."
+        ],
+        "service_logs": [
+          "pool=blue-3 token rejected reason=iat_in_future delta=287s",
+          "pool=blue-1 same token accepted subject=user-183",
+          "signing key id=k-2026-08 validated"
+        ],
+        "dependency_health": [
+          "identity provider status=healthy p95=31ms",
+          "signing key service status=healthy",
+          "NTP check blue-3 offset=+287s status=critical"
+        ],
+        "resource_metrics": [
+          "all pools cpu<51% memory<64%",
+          "blue-3 auth reject rate=96%",
+          "other pools auth reject rate<0.3%"
+        ],
+        "runtime_config": [
+          "TOKEN_CLOCK_SKEW_TOLERANCE=60s",
+          "blue-3 NTP_SYNC=false",
+          "blue-1 NTP_SYNC=true"
+        ]
+      },
+      "ground_truth": {"diagnosis": "clock_skew", "support_sources": ["recent_changes", "service_logs", "dependency_health", "runtime_config"]}
+    },
+    {
+      "id": "inc-11",
+      "title": "Shipment label creation receives bursts of 429 responses",
+      "difficulty": "challenging",
+      "initial_packet": [
+        "Shipment label creation error rate rose to 19% at 11:00 UTC.",
+        "Errors are concentrated on one carrier integration.",
+        "Shipment-api code and configuration are unchanged this week.",
+        "Retries sometimes succeed after several seconds.",
+        "Traffic rerouting requires logistics approval."
+      ],
+      "tools": {
+        "recent_changes": [
+          "No internal deploy or config change in seven days.",
+          "Carrier status page notes API policy update at 11:00 UTC.",
+          "Internal shipment volume is within the weekly range."
+        ],
+        "service_logs": [
+          "carrier=swiftship response=429 header retry-after=5",
+          "carrier=swiftship request rate=20/s",
+          "carrier=parcelgo response=201 latency=410ms"
+        ],
+        "dependency_health": [
+          "swiftship quota reports limit=10/s observed=20/s",
+          "swiftship health status=rate_limited",
+          "parcelgo and local database status=healthy"
+        ],
+        "resource_metrics": [
+          "shipment-api cpu=26% memory=48%",
+          "database pool utilization=21%",
+          "swiftship retry queue depth=941"
+        ],
+        "runtime_config": [
+          "SWIFTSHIP_CLIENT_RATE_LIMIT=20/s",
+          "SWIFTSHIP_RETRY_AFTER=true",
+          "PARCELGO_CLIENT_RATE_LIMIT=30/s"
+        ]
+      },
+      "ground_truth": {"diagnosis": "upstream_latency", "support_sources": ["recent_changes", "service_logs", "dependency_health", "runtime_config"]}
+    },
+    {
+      "id": "inc-12",
+      "title": "Intermittent report failures with the decisive trace missing",
+      "difficulty": "hard-abstention",
+      "initial_packet": [
+        "Report generation failed for 7 of 200 jobs between 04:00 and 04:20 UTC.",
+        "Failures were spread across three worker replicas.",
+        "The sampled error is `job failed: internal error` without a stack trace.",
+        "No single deployment or dependency alert aligns with all seven failures.",
+        "Operators ask whether to restart workers, but no action is approved."
+      ],
+      "tools": {
+        "recent_changes": [
+          "No report-worker code deploy in the last 48 hours.",
+          "A template bundle changed at 03:10 but affected successful and failed jobs equally.",
+          "No runtime configuration change occurred."
+        ],
+        "service_logs": [
+          "04:07 job=rp-882 failed internal error trace_id missing",
+          "04:08 job=rp-883 succeeded on the same worker replica",
+          "Detailed exception logging was disabled before the incident window."
+        ],
+        "dependency_health": [
+          "database, object store, and queue stayed within SLO during 04:00-04:20",
+          "No dependency errors correlate with the seven failed job ids.",
+          "Per-job outbound call traces are unavailable."
+        ],
+        "resource_metrics": [
+          "worker cpu range=18-63% memory range=41-67%",
+          "No OOM, disk, or restart event occurred.",
+          "Failed and successful jobs have overlapping resource profiles."
+        ],
+        "runtime_config": [
+          "EXCEPTION_DETAIL_LOGGING=false",
+          "TRACE_SAMPLING_RATE=0.01",
+          "FAILED_JOB_PAYLOAD_CAPTURE=false"
+        ]
+      },
+      "ground_truth": {"diagnosis": "abstain", "support_sources": ["recent_changes", "service_logs", "dependency_health", "resource_metrics", "runtime_config"]}
+    }
+  ]
+}

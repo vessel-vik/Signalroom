@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="SignalRoom — evidence-first incident triage that knows when to abstain." />
+    <title>SignalRoom — Evidence before action</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#case-detail">Skip to decision brief</a>
+    <header class="masthead">
+      <div class="contours" aria-hidden="true">
+        <svg viewBox="0 0 1440 210" preserveAspectRatio="none">
+          <path d="M-20 158C160 65 282 190 455 114S720 48 886 126s334 47 575-55" />
+          <path d="M-10 174c188-86 320 26 481-44s259-77 419 1 334 55 579-34" />
+          <path d="M-20 194c209-76 325 19 502-43s260-50 406 12 323 49 568-22" />
+        </svg>
+      </div>
+      <nav class="topbar" aria-label="Primary">
+        <a class="brand" href="#top" aria-label="SignalRoom home">
+          <span class="brand-mark" aria-hidden="true">S/</span>
+          <span>SignalRoom</span>
+        </a>
+        <div class="topbar-meta">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span>Local evidence run</span>
+          <span class="divider" aria-hidden="true"></span>
+          <span id="model-name">qwen2.5:7b</span>
+        </div>
+      </nav>
+      <div class="hero" id="top">
+        <p class="eyebrow light">Incident decision system / 2026</p>
+        <h1>Evidence<br />before action.</h1>
+        <p class="hero-copy">
+          SignalRoom investigates with read-only tools, verifies every citation,
+          and abstains when the evidence is not there.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <section class="scoreboard" aria-labelledby="evaluation-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 / Measured improvement</p>
+            <h2 id="evaluation-title">The fair comparison</h2>
+          </div>
+          <p class="section-note">Same model. Same 12 cases. Different access to evidence.</p>
+        </div>
+
+        <div class="metric-grid" aria-live="polite">
+          <article class="metric primary">
+            <span class="metric-label">Decision quality</span>
+            <strong id="advanced-score">—</strong>
+            <span class="metric-delta" id="score-delta">Awaiting evaluation</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Baseline</span>
+            <strong id="baseline-score">—</strong>
+            <span>Direct prompt / initial packet</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Diagnosis accuracy</span>
+            <strong id="accuracy-score">—</strong>
+            <span>Diagnose or abstain</span>
+          </article>
+          <article class="metric">
+            <span class="metric-label">Safety gate</span>
+            <strong id="safety-score">—</strong>
+            <span>Consequential actions approved</span>
+          </article>
+        </div>
+
+        <div class="comparison" aria-label="Baseline and agent score comparison">
+          <div class="comparison-row">
+            <span>Simple baseline</span>
+            <div class="bar-track"><span class="bar baseline-bar" id="baseline-bar"></span></div>
+            <strong id="baseline-bar-label">—</strong>
+          </div>
+          <div class="comparison-row">
+            <span>SignalRoom</span>
+            <div class="bar-track"><span class="bar advanced-bar" id="advanced-bar"></span></div>
+            <strong id="advanced-bar-label">—</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace" aria-labelledby="workspace-title">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">02 / Evidence workspace</p>
+            <h2 id="workspace-title">One incident, fully traced</h2>
+          </div>
+          <button class="outline-button" id="hard-case-button" type="button">Show the abstention case</button>
+        </div>
+
+        <div class="workspace-grid">
+          <aside class="case-rail" aria-label="Evaluation incidents">
+            <div class="rail-heading">
+              <span>Evaluation set</span>
+              <span id="case-count">12 cases</span>
+            </div>
+            <div id="case-list" class="case-list"></div>
+          </aside>
+
+          <article class="decision" id="case-detail" tabindex="-1">
+            <header class="decision-header">
+              <div>
+                <p class="eyebrow" id="case-id">INC-01 / Standard</p>
+                <h3 id="case-title">Loading the evidence run…</h3>
+              </div>
+              <div class="decision-status" id="decision-status">—</div>
+            </header>
+
+            <div class="decision-grid">
+              <section class="brief-panel" aria-labelledby="brief-title">
+                <div class="panel-label">
+                  <span id="brief-title">Incident decision brief</span>
+                  <span id="confidence">— confidence</span>
+                </div>
+                <p class="diagnosis" id="diagnosis">—</p>
+                <p class="summary" id="summary">Evaluation result will appear here.</p>
+
+                <div class="approval-card">
+                  <div class="approval-icon" aria-hidden="true">H</div>
+                  <div>
+                    <span>Human approval gate</span>
+                    <p id="remediation">No remediation proposed.</p>
+                  </div>
+                  <span class="approval-pill" id="approval-pill">Required</span>
+                </div>
+              </section>
+
+              <section class="score-card" aria-label="Selected case score">
+                <span class="eyebrow">Verified score</span>
+                <strong id="case-score">—</strong>
+                <dl>
+                  <div><dt>Decision</dt><dd id="decision-check">—</dd></div>
+                  <div><dt>Citations</dt><dd id="citation-check">—</dd></div>
+                  <div><dt>Safety</dt><dd id="safety-check">—</dd></div>
+                </dl>
+              </section>
+            </div>
+
+            <section class="evidence-section" aria-labelledby="evidence-title">
+              <div class="panel-label">
+                <span id="evidence-title">Evidence ledger</span>
+                <span id="citation-count">0 citations</span>
+              </div>
+              <div id="evidence-list" class="evidence-list"></div>
+            </section>
+
+            <section class="workflow-section" aria-labelledby="workflow-title">
+              <div class="panel-label">
+                <span id="workflow-title">Agent trajectory</span>
+                <span>Inspectable by design</span>
+              </div>
+              <ol id="workflow-list" class="workflow-list"></ol>
+            </section>
+          </article>
+        </div>
+      </section>
+
+      <section class="principle" aria-labelledby="principle-title">
+        <p class="eyebrow light">03 / The hot take</p>
+        <blockquote id="principle-title">
+          “Abstention is the product. A reliable agent is not the one that always
+          answers—it is the one that can prove when an answer is not justified.”
+        </blockquote>
+        <div class="principle-meta">
+          <span>Observed failure mode</span>
+          <p>Single prompts convert missing evidence into confident narrative.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>SignalRoom / micro1 Frontier Engineering Challenge 2026</span>
+      <span>Read-only tools · synthetic data · local model</span>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>
+

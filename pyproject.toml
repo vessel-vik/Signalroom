@@ -1,0 +1,11 @@
+[project]
+name = "signalroom"
+version = "0.1.0"
+description = "An evidence-first incident triage agent that knows when to abstain."
+requires-python = ">=3.9"
+
+[project.scripts]
+signalroom = "signalroom:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

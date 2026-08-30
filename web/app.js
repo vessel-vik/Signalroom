@@ -24,11 +24,19 @@ let selected = 0;
 let stepIndex = 0;
 let highlight = null; // "source:line" to pulse in the evidence step
 const auditLog = {}; // caseId -> [{action, who, at}]
+const liveByCase = {}; // caseId -> freshly produced advanced result
+let viewLive = false; // show the live run instead of the committed one
+const canLive = typeof location !== "undefined" && /^https?:$/.test(location.protocol);
 
 // ---------- data helpers ----------
 
 function caseAt(i) {
   return report.cases[i];
+}
+
+// The advanced result the detail view renders: committed by default, live when toggled.
+function activeAdv(item) {
+  return viewLive && liveByCase[item.id] ? liveByCase[item.id] : item.advanced;
 }
 
 function packetFor(id) {
@@ -77,7 +85,7 @@ function renderOverview() {
   body.replaceChildren();
   $("case-count").textContent = `${report.cases.length} cases`;
   report.cases.forEach((item, i) => {
-    const adv = item.advanced;
+    const adv = activeAdv(item);
     const base = item.baseline;
     const pass = adv.score.decision_correct;
     const row = document.createElement("button");
@@ -104,7 +112,7 @@ function renderOverview() {
 function renderDetail() {
   const item = caseAt(selected);
   if (!item) return;
-  const adv = item.advanced;
+  const adv = activeAdv(item);
   const p = adv.prediction;
   const abstain = p.decision === "abstain";
 
@@ -136,16 +144,76 @@ function renderDetail() {
   $("safety-check").textContent = check(adv.verification.safety.passed);
 
   renderApproval(item);
+  renderLiveBar(item);
   buildSteps(item);
   renderStep();
 }
 
+// live reproduce: re-run the real model on this case and compare to the committed result
+function renderLiveBar(item) {
+  const bar = $("live-bar");
+  bar.replaceChildren();
+  if (!canLive) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const hasLive = !!liveByCase[item.id];
+  const toggle = hasLive
+    ? `<div class="live-toggle" role="group" aria-label="Result source">
+         <button type="button" class="lt ${!viewLive ? "on" : ""}" data-src="committed">Committed</button>
+         <button type="button" class="lt ${viewLive ? "on" : ""}" data-src="live">Live</button>
+       </div>`
+    : "";
+  const wrap = document.createElement("div");
+  wrap.className = "live-inner";
+  wrap.innerHTML = `
+    <div class="live-lead"><span class="live-k">Reproduce</span><p>Re-run the real model on this incident and compare it to the committed result.</p></div>
+    <div class="live-actions">${toggle}<button type="button" class="btn run" id="btn-run">▶ Run this case live</button></div>
+    <p class="live-status" id="live-status" role="status" aria-live="polite"></p>`;
+  bar.append(wrap);
+  $("btn-run").addEventListener("click", () => runLive(item));
+  bar.querySelectorAll("[data-src]").forEach((b) =>
+    b.addEventListener("click", () => { viewLive = b.getAttribute("data-src") === "live"; renderDetail(); })
+  );
+  if (hasLive) {
+    const live = liveByCase[item.id];
+    const c = item.advanced;
+    const same =
+      live.prediction.decision === c.prediction.decision &&
+      (live.prediction.decision === "abstain" || live.prediction.diagnosis === c.prediction.diagnosis);
+    $("live-status").innerHTML = `<span class="live-badge ${same ? "ok" : "diff"}">${same ? "✓ reproduced" : "≠ diverged"}</span> live run scored ${live.score.total}/100 in ${live.latency_seconds}s — ${same ? "same decision as the committed run." : "a different decision from committed."}`;
+  }
+}
+
+async function runLive(item) {
+  const btn = $("btn-run");
+  const status = $("live-status");
+  btn.disabled = true;
+  btn.textContent = "Investigating…";
+  status.innerHTML = `<span class="live-badge run">running</span> the model is investigating — plan, tools, citations, verify (~20–50s).`;
+  try {
+    const res = await fetch("../api/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ case_id: item.id, mode: "advanced" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+    liveByCase[item.id] = data.result;
+    viewLive = true;
+    renderDetail();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "▶ Run this case live";
+    status.innerHTML = `<span class="live-badge diff">error</span> ${esc(e.message || "run failed")} — is Ollama running? (ollama serve)`;
+  }
+}
+
 // interactive human-approval gate
 function renderApproval(item) {
-  const p = item.advanced.prediction;
+  const adv = activeAdv(item);
+  const p = adv.prediction;
   const wrap = $("approval");
   wrap.replaceChildren();
-  const consequential = item.advanced.verification.safety.consequential_action_proposed;
+  const consequential = adv.verification.safety.consequential_action_proposed;
   const remediation = p.proposed_remediation && p.proposed_remediation !== "" ? p.proposed_remediation : null;
 
   const head = document.createElement("div");
@@ -209,7 +277,7 @@ function renderAudit(id) {
 let steps = [];
 
 function buildSteps(item) {
-  const adv = item.advanced;
+  const adv = activeAdv(item);
   const traj = adv.trajectory;
   steps = [
     { key: "plan", label: "Plan", detail: "Falsifiable hypotheses", render: () => renderPlan(adv) },
@@ -263,7 +331,7 @@ function renderPlan(adv) {
 }
 
 function renderEvidence(item) {
-  const adv = item.advanced;
+  const adv = activeAdv(item);
   const sources = executedSources(adv, item.id);
   const cited = citedLines(adv);
   const blocks = Object.entries(sources)
@@ -286,7 +354,7 @@ function renderEvidence(item) {
 }
 
 function renderCite(item) {
-  const adv = item.advanced;
+  const adv = activeAdv(item);
   const p = adv.prediction;
   const checks = adv.verification.citations.checks;
   const abstain = p.decision === "abstain";
@@ -356,6 +424,7 @@ function selectCase(i, scroll) {
   selected = i;
   stepIndex = 0;
   highlight = null;
+  viewLive = false;
   renderOverview();
   renderDetail();
   if (scroll) $("case-detail").scrollIntoView({ behavior: "smooth", block: "start" });

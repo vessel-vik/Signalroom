@@ -98,7 +98,7 @@ make demo    # serve the dashboard and open it — runs on the committed evaluat
 make eval    # full 12-case baseline vs advanced comparison (needs Ollama)
 ```
 
-The dashboard reads the committed `web/results.json`, so `make demo` shows the entire evaluation — the fair comparison, every case's trajectory replay, the raw evidence with resolved citations, and the human-approval gate — without a model running.
+The dashboard reads the committed `web/results.json`, so `make demo` shows the entire evaluation — the fair comparison, every case's trajectory replay, the raw evidence with resolved citations, and the human-approval gate — without a model running. With Ollama up, each case also has a **Run this case live** control that re-executes the real model and confirms it reproduces the committed decision.
 
 No Python packages, paid APIs, credentials, containers, or private data are required. The twelve incident packets are synthetic and frozen in `data/cases.json`.
 

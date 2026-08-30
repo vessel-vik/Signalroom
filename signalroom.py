@@ -396,10 +396,46 @@ def run_one(case_id: str, model: str, mode: str) -> dict[str, Any]:
     return result
 
 
-def serve(port: int, open_browser: bool = False) -> None:
+def serve(port: int, open_browser: bool = False, model: str = "qwen2.5:7b-instruct") -> None:
+    catalog = read_json(DATA_PATH)
+    cases_by_id = {case["id"]: case for case in catalog["cases"]}
+
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(*args, directory=str(ROOT), **kwargs)
+
+        def log_message(self, *args: Any) -> None:  # keep the console quiet
+            pass
+
+        def _send_json(self, obj: dict[str, Any], status: int = 200) -> None:
+            payload = json.dumps(obj).encode()
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+        def do_POST(self) -> None:  # noqa: N802 (stdlib naming)
+            if self.path.split("?")[0] != "/api/run":
+                self._send_json({"error": "not found"}, 404)
+                return
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(length) or b"{}")
+            except (ValueError, json.JSONDecodeError):
+                body = {}
+            case = cases_by_id.get(str(body.get("case_id", "")))
+            mode = body.get("mode", "advanced")
+            if case is None or mode not in {"baseline", "advanced"}:
+                self._send_json({"error": "unknown case_id or mode"}, 400)
+                return
+            try:
+                result = baseline(case, catalog, model) if mode == "baseline" else run_agent(case, catalog, model)
+            except RuntimeError as exc:  # Ollama unavailable
+                self._send_json({"error": str(exc)}, 503)
+                return
+            # `expected` lets the client confirm the live run reproduces the committed decision.
+            self._send_json({"result": result, "expected": case["ground_truth"]["diagnosis"], "model": model})
 
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/web/"
@@ -445,7 +481,7 @@ def main() -> None:
     elif args.command == "evaluate":
         evaluate(args.model, args.limit)
     elif args.command == "serve":
-        serve(args.port, args.open)
+        serve(args.port, args.open, args.model)
     else:
         self_check()
 

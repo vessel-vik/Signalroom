@@ -72,7 +72,7 @@ The model runs with temperature `0`, seed `42`, and an 8192-token context. Local
 python3 signalroom.py serve --port 8080
 ```
 
-Open <http://127.0.0.1:8080/web/>. Select cases from the left rail or choose **Show the abstention case**.
+Open <http://127.0.0.1:8080/web/> (or `python3 signalroom.py serve --open`). Pick any row to replay its full trajectory — plan, executed tool output with resolved citations highlighted, the human-approval gate, and the deterministic checks — or choose **Jump to the abstention case**. With Ollama running, **Run this case live** re-executes the model and compares it to the committed result.
 
 ## Data and expected output
 

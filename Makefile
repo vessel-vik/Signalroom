@@ -1,10 +1,10 @@
-.PHONY: help check demo serve smoke eval
+.PHONY: help check web-check demo serve smoke eval
 MODEL ?= qwen2.5:7b-instruct
 PORT ?= 8080
 
 help:
 	@echo "SignalRoom - make targets"
-	@echo "  make check   Self-check + unit tests            (no model needed)"
+	@echo "  make check   Self-check + unit tests (Python, plus JS render test if node present)"
 	@echo "  make demo    Serve the dashboard and open it     (committed results, no model)"
 	@echo "  make serve   Serve the dashboard                 (http://127.0.0.1:$(PORT)/web/)"
 	@echo "  make smoke   Fast one-case evaluation            (needs Ollama + MODEL)"
@@ -14,6 +14,10 @@ help:
 check:
 	python3 signalroom.py self-check
 	python3 -m unittest discover -s tests
+	@command -v node >/dev/null 2>&1 && node tests/test_dashboard.js || echo "(node not found; skipping dashboard render test)"
+
+web-check:
+	node tests/test_dashboard.js
 
 demo:
 	python3 signalroom.py serve --port $(PORT) --open

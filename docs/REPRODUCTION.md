@@ -23,11 +23,12 @@ Keep `ollama serve` running in one terminal. No API key, `.env` file, virtual en
 ## 1. Verify the code without a model
 
 ```bash
+make check          # or, individually:
 python3 signalroom.py self-check
 python3 -m unittest discover -s tests -v
 ```
 
-Expected: one self-check and three unit tests pass.
+Expected: the self-check passes, 21 unit tests pass, and (if Node is installed) the headless dashboard render test passes across all 12 cases. The same `make check` runs in CI on every push.
 
 ## 2. Run the simple baseline
 

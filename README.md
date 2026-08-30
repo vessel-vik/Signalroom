@@ -1,5 +1,7 @@
 # SignalRoom
 
+[![CI](https://github.com/vessel-vik/Signalroom/actions/workflows/ci.yml/badge.svg)](https://github.com/vessel-vik/Signalroom/actions/workflows/ci.yml)
+
 **Evidence-first incident triage that knows when to abstain.**
 
 SignalRoom is for an on-call engineer deciding what to do while an incident is moving faster than the available evidence. Today, that engineer has to reconcile an alert, partial logs, recent changes, dependency health, and runtime configuration under time pressure. A generic assistant can turn those fragments into a convincing story. Convincing is not the same as supported.

@@ -89,77 +89,77 @@
       <section class="workspace" aria-labelledby="workspace-title">
         <div class="section-heading compact">
           <div>
-            <p class="eyebrow">02 / Evidence workspace</p>
-            <h2 id="workspace-title">One incident, fully traced</h2>
+            <p class="eyebrow">02 / Evaluation set</p>
+            <h2 id="workspace-title">All twelve, fully traced</h2>
           </div>
-          <button class="outline-button" id="hard-case-button" type="button">Show the abstention case</button>
+          <button class="outline-button" id="hard-case-button" type="button">Jump to the abstention case</button>
         </div>
 
-        <div class="workspace-grid">
-          <aside class="case-rail" aria-label="Evaluation incidents">
-            <div class="rail-heading">
-              <span>Evaluation set</span>
-              <span id="case-count">12 cases</span>
-            </div>
-            <div id="case-list" class="case-list"></div>
-          </aside>
-
-          <article class="decision" id="case-detail" tabindex="-1">
-            <header class="decision-header">
-              <div>
-                <p class="eyebrow" id="case-id">INC-01 / Standard</p>
-                <h3 id="case-title">Loading the evidence run…</h3>
-              </div>
-              <div class="decision-status" id="decision-status">—</div>
-            </header>
-
-            <div class="decision-grid">
-              <section class="brief-panel" aria-labelledby="brief-title">
-                <div class="panel-label">
-                  <span id="brief-title">Incident decision brief</span>
-                  <span id="confidence">— confidence</span>
-                </div>
-                <p class="diagnosis" id="diagnosis">—</p>
-                <p class="summary" id="summary">Evaluation result will appear here.</p>
-
-                <div class="approval-card">
-                  <div class="approval-icon" aria-hidden="true">H</div>
-                  <div>
-                    <span>Human approval gate</span>
-                    <p id="remediation">No remediation proposed.</p>
-                  </div>
-                  <span class="approval-pill" id="approval-pill">Required</span>
-                </div>
-              </section>
-
-              <section class="score-card" aria-label="Selected case score">
-                <span class="eyebrow">Verified score</span>
-                <strong id="case-score">—</strong>
-                <dl>
-                  <div><dt>Decision</dt><dd id="decision-check">—</dd></div>
-                  <div><dt>Citations</dt><dd id="citation-check">—</dd></div>
-                  <div><dt>Safety</dt><dd id="safety-check">—</dd></div>
-                </dl>
-              </section>
-            </div>
-
-            <section class="evidence-section" aria-labelledby="evidence-title">
-              <div class="panel-label">
-                <span id="evidence-title">Evidence ledger</span>
-                <span id="citation-count">0 citations</span>
-              </div>
-              <div id="evidence-list" class="evidence-list"></div>
-            </section>
-
-            <section class="workflow-section" aria-labelledby="workflow-title">
-              <div class="panel-label">
-                <span id="workflow-title">Agent trajectory</span>
-                <span>Inspectable by design</span>
-              </div>
-              <ol id="workflow-list" class="workflow-list"></ol>
-            </section>
-          </article>
+        <div class="overview" role="table" aria-label="All evaluation cases, baseline versus SignalRoom">
+          <div class="overview-head" role="row" aria-hidden="true">
+            <span>Case</span>
+            <span>Incident</span>
+            <span>Type</span>
+            <span class="ov-h">Baseline</span><span></span>
+            <span class="ov-h">SignalRoom</span><span></span>
+            <span>Decision</span>
+          </div>
+          <div id="overview-body" class="overview-body"></div>
+          <div class="overview-foot">
+            <span id="case-count">12 cases</span>
+            <span>Select a row to trace the full investigation below</span>
+          </div>
         </div>
+
+        <article class="case-detail" id="case-detail" tabindex="-1">
+          <header class="detail-header">
+            <div>
+              <p class="eyebrow" id="case-id">INC-01 / Standard</p>
+              <h3 id="case-title">Loading the evidence run…</h3>
+            </div>
+            <div class="decision-status" id="decision-status">—</div>
+          </header>
+
+          <div class="detail-top">
+            <section class="packet-panel" aria-label="Incident input">
+              <div class="panel-label"><span>Incident input</span><span>what the engineer starts with</span></div>
+              <ul id="packet-lines" class="packet-lines"></ul>
+            </section>
+            <section class="score-card" aria-label="Verified score">
+              <span class="eyebrow">Verified score</span>
+              <strong id="case-score">—</strong>
+              <dl>
+                <div><dt>Decision</dt><dd id="decision-check">—</dd></div>
+                <div><dt>Citations</dt><dd id="citation-check">—</dd></div>
+                <div><dt>Safety</dt><dd id="safety-check">—</dd></div>
+              </dl>
+            </section>
+          </div>
+
+          <section class="brief-panel" aria-labelledby="brief-title">
+            <div class="panel-label">
+              <span id="brief-title">Incident decision brief</span>
+              <span id="confidence">— confidence</span>
+            </div>
+            <p class="diagnosis" id="diagnosis">—</p>
+            <p class="summary" id="summary">Evaluation result will appear here.</p>
+          </section>
+
+          <section class="approval" id="approval" aria-label="Human approval gate"></section>
+
+          <section class="stepper" aria-label="Agent trajectory">
+            <div class="panel-label">
+              <span>Agent trajectory · replay</span>
+              <span id="step-progress">Step 1 of 5</span>
+            </div>
+            <div class="step-tabs" id="step-tabs" role="tablist"></div>
+            <div class="stage" id="stage" role="tabpanel"></div>
+            <div class="step-controls">
+              <button class="outline-button" id="step-prev" type="button">‹ Prev</button>
+              <button class="outline-button" id="step-next" type="button">Next ›</button>
+            </div>
+          </section>
+        </article>
       </section>
 
       <section class="principle" aria-labelledby="principle-title">

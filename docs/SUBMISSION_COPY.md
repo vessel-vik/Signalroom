@@ -36,7 +36,7 @@ Abstention is the product. Any agent can produce a confident answer; the reliabl
 
 ## Links to fill before submission
 
-- Repository: `<GITHUB_URL>`
+- Repository: https://github.com/vessel-vik/Signalroom
 - Demo video: `<VIDEO_URL>`
 - Optional live demo: `<DEMO_URL>`
 

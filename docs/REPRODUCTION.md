@@ -12,7 +12,7 @@ This guide assumes a clean environment and no access to the original development
 ## Setup
 
 ```bash
-git clone <YOUR-SUBMISSION-REPOSITORY-URL> signalroom
+git clone https://github.com/vessel-vik/Signalroom.git signalroom
 cd signalroom
 ollama pull qwen2.5:7b-instruct
 ollama serve

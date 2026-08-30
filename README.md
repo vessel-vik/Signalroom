@@ -90,6 +90,16 @@ python3 signalroom.py serve --port 8080
 
 Open <http://127.0.0.1:8080/web/>.
 
+Prefer one command? A `Makefile` wraps the common paths:
+
+```bash
+make check   # self-check + unit tests, no model needed
+make demo    # serve the dashboard and open it — runs on the committed evaluation, no model needed
+make eval    # full 12-case baseline vs advanced comparison (needs Ollama)
+```
+
+The dashboard reads the committed `web/results.json`, so `make demo` shows the entire evaluation — the fair comparison, every case's trajectory replay, the raw evidence with resolved citations, and the human-approval gate — without a model running.
+
 No Python packages, paid APIs, credentials, containers, or private data are required. The twelve incident packets are synthetic and frozen in `data/cases.json`.
 
 See [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md) for clean-environment commands, expected outputs, runtime, and evaluation details.
@@ -98,6 +108,7 @@ See [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md) for clean-environment command
 
 ```text
 signalroom.py              CLI, agent loop, tool simulation, verifier, scorer, server
+Makefile                   check / demo / serve / smoke / eval shortcuts
 data/cases.json            12 frozen incidents + hidden ground truth for evaluation
 prompts/                   baseline, planner, and analyst instructions
 tests/test_signalroom.py   dependency-free checks for parser, citations, and safety

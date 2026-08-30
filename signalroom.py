@@ -396,13 +396,18 @@ def run_one(case_id: str, model: str, mode: str) -> dict[str, Any]:
     return result
 
 
-def serve(port: int) -> None:
+def serve(port: int, open_browser: bool = False) -> None:
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(*args, directory=str(ROOT), **kwargs)
 
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print(f"SignalRoom dashboard: http://127.0.0.1:{port}/web/")
+    url = f"http://127.0.0.1:{port}/web/"
+    print(f"SignalRoom dashboard: {url}")
+    if open_browser:
+        import webbrowser
+
+        webbrowser.open(url)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
@@ -432,6 +437,7 @@ def main() -> None:
     eval_parser.add_argument("--limit", type=int)
     serve_parser = sub.add_parser("serve", help="Serve the evidence dashboard")
     serve_parser.add_argument("--port", type=int, default=8080)
+    serve_parser.add_argument("--open", action="store_true", help="Open the dashboard in a browser")
     sub.add_parser("self-check", help="Run dependency-free checks")
     args = parser.parse_args()
     if args.command == "run":
@@ -439,7 +445,7 @@ def main() -> None:
     elif args.command == "evaluate":
         evaluate(args.model, args.limit)
     elif args.command == "serve":
-        serve(args.port)
+        serve(args.port, args.open)
     else:
         self_check()
 

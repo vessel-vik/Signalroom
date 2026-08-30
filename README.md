@@ -102,7 +102,7 @@ The dashboard reads the committed `web/results.json`, so `make demo` shows the e
 
 No Python packages, paid APIs, credentials, containers, or private data are required. The twelve incident packets are synthetic and frozen in `data/cases.json`.
 
-See [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md) for clean-environment commands, expected outputs, runtime, and evaluation details.
+See [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md) for clean-environment commands, expected outputs, runtime, and evaluation details. To add your own incident, read-only tool, or diagnosis, see [`docs/EXTENDING.md`](docs/EXTENDING.md) — it is a data edit, no code change.
 
 ## Repository map
 
@@ -114,7 +114,7 @@ prompts/                   baseline, planner, and analyst instructions
 tests/test_signalroom.py   dependency-free checks for parser, citations, and safety
 artifacts/                 committed evaluation evidence and representative runs
 web/                       editorial evidence dashboard
-docs/                      reproduction, trajectories, market comparison, video, and submission copy
+docs/                      reproduction, extension guide, trajectories, market comparison, video, and submission copy
 ```
 
 ## Improvement changelog

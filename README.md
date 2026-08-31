@@ -1,7 +1,5 @@
 # SignalRoom
 
-[![CI](https://github.com/vessel-vik/Signalroom/actions/workflows/ci.yml/badge.svg)](https://github.com/vessel-vik/Signalroom/actions/workflows/ci.yml)
-
 **Evidence-first incident triage that knows when to abstain.**
 
 SignalRoom is for an on-call engineer deciding what to do while an incident is moving faster than the available evidence. Today, that engineer has to reconcile an alert, partial logs, recent changes, dependency health, and runtime configuration under time pressure. A generic assistant can turn those fragments into a convincing story. Convincing is not the same as supported.
@@ -140,7 +138,7 @@ Synthetic cases can flatter the prompts that were tuned on them. The hard-case p
 
 - **Runtime model:** Ollama with `qwen2.5:7b-instruct`.
 - **Coding and research agent:** OpenAI Codex.
-- **Concept reviewers:** Claude Sonnet, Claude Opus, Qwen 3.5 4B, Qwen 2.5 7B, and Ornith 9B.
+- **Concept reviewers:** Claude Sonnet, Claude Opus, Ollama `qwen3.5:4b`, Ollama `qwen2.5:7b-instruct`, and Ollama `hf.co/deepreinforce-ai/Ornith-1.0-9B-GGUF:Q4_K_M`.
 - **Pre-existing project code:** none. All project code, data, prompts, design, tests, and documentation were created during the challenge work session.
 - **Third-party runtime dependencies:** Ollama only. Python code uses the standard library.
 

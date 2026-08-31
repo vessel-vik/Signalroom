@@ -79,3 +79,13 @@ This is code, not a language model. It checks:
 **Input:** the same incident title, initial packet, and diagnosis catalog. No tools or verifier feedback are available before the decision.
 
 For recorded `inc-01`, the baseline selected `feature_flag_query` with 75% confidence despite receiving no feature-flag evidence. Its packet citations existed but did not support that cause; score: 25/100.
+
+## 8. Final adversarial review — Claude Opus
+
+**Instruction:** act as a skeptical final-round judge; read the code, prompts, all sixteen cases, committed evaluation, ablation, tests, dashboard, reproduction guide, submission copy, and video script; verify every number; look for leakage, overfitting, safety gaps, stale counts, and demo failures; do not edit files.
+
+**Response:** Claude independently recomputed the 94.4 advanced mean, 61.6 baseline mean, +32.8 improvement, per-difficulty means, three correct abstentions, the `inc-13` miss, and the one baseline safety failure. It found no P0/P1 blocker, estimated roughly 90/100 against the published rubric, and issued a GO for video. Its P2 cautions were the keyword-based safety gate, one-run model variance, exact reviewer naming, and matching the script to the visible button label.
+
+**Feedback applied:** reviewer names now use their exact local model identifiers; the video script uses the on-screen **Jump to the abstention case** label, states the committed 94.4/61.6 result, and distinguishes deterministic scoring from variable local inference. The analyst prompt and evaluation data were not changed after scoring.
+
+**Independent browser check:** the committed 16-case dashboard loaded without console errors, displayed the artifact-derived metrics and decomposition, jumped to the 100/100 abstention case, and replayed the executed evidence. Local `make check` remains green.

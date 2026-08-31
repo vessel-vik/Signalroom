@@ -28,7 +28,7 @@ python3 signalroom.py self-check
 python3 -m unittest discover -s tests -v
 ```
 
-Expected: the self-check passes, 21 unit tests pass, and (if Node is installed) the headless dashboard render test passes across all 16 cases. The same `make check` runs in CI on every push.
+Expected: the self-check passes, 21 unit tests pass, and (if Node is installed) the headless dashboard render test passes across all 16 cases. The same `make check` is defined in `.github/workflows/ci.yml` for pushes and pull requests.
 
 ## 2. Run the simple baseline
 

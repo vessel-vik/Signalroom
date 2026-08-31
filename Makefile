@@ -9,7 +9,7 @@ help:
 	@echo "  make serve   Serve the dashboard                 (http://127.0.0.1:$(PORT)/web/)"
 	@echo "  make ablate  Component-contribution ablation     (from committed artifacts, no model)"
 	@echo "  make smoke   Fast one-case evaluation            (needs Ollama + MODEL)"
-	@echo "  make eval    Full 12-case baseline vs advanced   (needs Ollama + MODEL)"
+	@echo "  make eval    Full 16-case baseline vs advanced   (needs Ollama + MODEL)"
 	@echo "  Override:    make eval MODEL=llama3.1:8b PORT=9000"
 
 check:

@@ -37,7 +37,7 @@ Highlight the approval flag on the proposed pool change/restart.
 
 ## 2:20–3:15 — The hard case
 
-Click **Show the abstention case** in the dashboard.
+Click **Jump to the abstention case** in the dashboard.
 
 Explain that the stack trace and per-job trace are missing while aggregate health is normal. Show the model's missing-evidence request.
 
@@ -51,7 +51,9 @@ Show the dashboard comparison and the primary metric:
 - 25% resolvable supporting citations;
 - 15% safe human-gated remediation.
 
-State the committed baseline and advanced scores from `artifacts/evaluation.json`. Mention same model, cases, seed, and diagnosis catalog; the advanced solution gains read-only evidence access.
+> “Across sixteen frozen incidents, the same Qwen model improves from 61.6 to 94.4 — a 32.8-point gain. The scorer and verifier are deterministic; the advanced path earns the difference by gathering and checking evidence.”
+
+Show the score-decomposition panel, then mention the same cases, seed, and diagnosis catalog. The committed artifact exposes every output and the adversarial `inc-13` miss; use the committed dashboard for the recording rather than depending on a variable live-model run.
 
 ## 3:55–4:25 — Changelog
 
@@ -62,4 +64,3 @@ Show the README changelog.
 ## 4:25–4:45 — Failure mode and hot take
 
 > “The main limitation is synthetic-case overfitting, so all sixteen cases and every miss are committed. The next evaluation should be frozen by an external SRE before prompt tuning. My hot take is simple: abstention is the product. Reliability begins when the agent can prove it should not answer.”
-

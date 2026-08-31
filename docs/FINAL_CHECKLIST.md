@@ -14,7 +14,7 @@ The public HackerEarth page lists the deadline as **31 August 2026, 18:00 UTC** 
 ## Elyees must complete
 
 1. Register or confirm participation on HackerEarth.
-2. Publish this directory as a public repository and replace `<GITHUB_URL>`.
+2. Confirm the public repository at <https://github.com/vessel-vik/Signalroom> shows the final commit.
 3. Run the demo once from a clean terminal, then record the script in `docs/VIDEO_SCRIPT.md` at 1440p. Keep the result below five minutes.
 4. Upload the video and replace `<VIDEO_URL>`.
 5. If hosting the static dashboard, replace `<DEMO_URL>`; otherwise remove that optional line.

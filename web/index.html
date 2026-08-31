@@ -46,7 +46,7 @@
             <p class="eyebrow">01 / Measured improvement</p>
             <h2 id="evaluation-title">The fair comparison</h2>
           </div>
-          <p class="section-note">Same model. Same 12 cases. Different access to evidence.</p>
+          <p class="section-note">Same model. Same 16 cases. Different access to evidence.</p>
         </div>
 
         <div class="metric-grid" aria-live="polite">
@@ -84,13 +84,24 @@
             <strong id="advanced-bar-label">—</strong>
           </div>
         </div>
+
+        <div class="ablation" id="ablation" hidden>
+          <p class="eyebrow" id="ablation-eyebrow">Where the improvement comes from</p>
+          <div class="decomp" id="decomp-body"></div>
+          <div class="decomp-legend">
+            <span><i class="k decision" aria-hidden="true"></i>Decision — evidence access</span>
+            <span><i class="k citation" aria-hidden="true"></i>Citations — verification</span>
+            <span><i class="k safety" aria-hidden="true"></i>Safety — approval gate</span>
+          </div>
+          <p class="decomp-note">Full component ablation — including which parts earn their keep by changing a decision, not by adding points — in <code>docs/ABLATION.md</code>.</p>
+        </div>
       </section>
 
       <section class="workspace" aria-labelledby="workspace-title">
         <div class="section-heading compact">
           <div>
             <p class="eyebrow">02 / Evaluation set</p>
-            <h2 id="workspace-title">All twelve, fully traced</h2>
+            <h2 id="workspace-title">All sixteen, fully traced</h2>
           </div>
           <button class="outline-button" id="hard-case-button" type="button">Jump to the abstention case</button>
         </div>
@@ -106,7 +117,7 @@
           </div>
           <div id="overview-body" class="overview-body"></div>
           <div class="overview-foot">
-            <span id="case-count">12 cases</span>
+            <span id="case-count">16 cases</span>
             <span>Select a row to trace the full investigation below</span>
           </div>
         </div>

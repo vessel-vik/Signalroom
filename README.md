@@ -22,7 +22,7 @@ The 2026 AI-SRE market is converging on evidence-backed, human-gated triage—an
 
 ## One fair comparison
 
-Both paths use `qwen2.5:7b-instruct`, temperature `0`, seed `42`, the same diagnosis catalog, and the same twelve frozen incidents.
+Both paths use `qwen2.5:7b-instruct`, temperature `0`, seed `42`, the same diagnosis catalog, and the same sixteen frozen incidents.
 
 | | Simple baseline | SignalRoom |
 |---|---|---|
@@ -71,7 +71,7 @@ The language model never sees `ground_truth`. It sees only the initial packet, t
 
 `inc-12` contains a generic internal error, no stack trace, healthy aggregate dependencies, and overlapping resource profiles. The decisive per-job trace was not captured. A plausible root cause would be easy to invent and impossible to defend.
 
-The correct decision is `abstain`. A strong run cites the absence of correlated signals and requests the disabled exception/trace evidence. This case tests judgment, not trivia.
+The correct decision is `abstain`. A strong run cites the absence of correlated signals and requests the disabled exception/trace evidence. This case tests judgment, not trivia. Two further abstention cases (`inc-14`, `inc-16`) withhold *different* decisive signals — a per-message delivery result and an in-request slow-path profile — and the system abstains correctly on all three, so the behavior is not tuned to one incident.
 
 ## Quick start
 
@@ -97,12 +97,12 @@ Prefer one command? A `Makefile` wraps the common paths:
 ```bash
 make check   # self-check + unit tests, no model needed
 make demo    # serve the dashboard and open it — runs on the committed evaluation, no model needed
-make eval    # full 12-case baseline vs advanced comparison (needs Ollama)
+make eval    # full 16-case baseline vs advanced comparison (needs Ollama)
 ```
 
 The dashboard reads the committed `web/results.json`, so `make demo` shows the entire evaluation — the fair comparison, every case's trajectory replay, the raw evidence with resolved citations, and the human-approval gate — without a model running. With Ollama up, each case also has a **Run this case live** control that re-executes the real model and confirms it reproduces the committed decision.
 
-No Python packages, paid APIs, credentials, containers, or private data are required. The twelve incident packets are synthetic and frozen in `data/cases.json`.
+No Python packages, paid APIs, credentials, containers, or private data are required. The sixteen incident packets are synthetic and frozen in `data/cases.json`.
 
 See [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md) for clean-environment commands, expected outputs, runtime, and evaluation details. To add your own incident, read-only tool, or diagnosis, see [`docs/EXTENDING.md`](docs/EXTENDING.md) — it is a data edit, no code change.
 
@@ -111,7 +111,7 @@ See [`docs/REPRODUCTION.md`](docs/REPRODUCTION.md) for clean-environment command
 ```text
 signalroom.py              CLI, agent loop, tool simulation, verifier, scorer, server
 Makefile                   check / demo / serve / smoke / eval shortcuts
-data/cases.json            12 frozen incidents + hidden ground truth for evaluation
+data/cases.json            16 frozen incidents + hidden ground truth for evaluation
 prompts/                   baseline, planner, and analyst instructions
 tests/test_signalroom.py   dependency-free checks for parser, citations, and safety
 artifacts/                 committed evaluation evidence and representative runs
@@ -130,6 +130,7 @@ docs/                      reproduction, extension guide, ablation, trajectories
 | Iteration 4 | The first full run exposed a bad hard-case behavior: generic failure + normal memory metrics became a 60%-confident memory-leak story. Added a general rule that diagnosis needs positive mechanism evidence and missing artifacts must be named. | The unedited pre-fix run is `artifacts/evaluation-v1-pre-abstention-rule.json` (**95/100** advanced mean; `inc-12` scored **40/100**). The next isolated hard-case run abstained and requested a correlated failed-event trace (**100/100**). | Kept. Negative or missing evidence can justify abstention; it cannot support a specific cause. |
 | Removed experiment | Considered autonomous remediation and broad shell access. | It would violate the challenge safety rule and make reproducibility depend on live infrastructure. | Removed. Five simulated read-only tools are enough to demonstrate real agency. |
 | Final | Added the under-evidenced case and made abstention a first-class decision. | `inc-12` withholds the decisive trace; diagnosis is unscorable by design, while a precise evidence request is verifiable. | Main contribution: the workflow optimizes justified decisions, not answer rate. |
+| Evaluation hardening | Grew the set to 16: adversarial distractors (a deploy red herring; thread-pool starvation behind a "disk pressure" decoy) and two more abstention cases with different missing signals. | Advanced moved from a perfect 100 on the easy 12 to **94.4** on 16; baseline **61.6** (**+32.8**). All three abstention cases abstain correctly; `inc-13` is a committed adversarial miss. See [`docs/ABLATION.md`](docs/ABLATION.md). | Kept. A score pinned at 100 cannot show headroom or prove abstention generalizes; a harder set the system still wins by a wider margin is more credible. |
 
 ## Main failure mode
 

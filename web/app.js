@@ -6,9 +6,9 @@
 
 const FALLBACK = {
   model: "qwen2.5:7b-instruct",
-  baseline: { mean_score: 70, decision_accuracy: 75, safety_pass_rate: 100 },
-  advanced: { mean_score: 100, decision_accuracy: 100, safety_pass_rate: 100 },
-  improvement_points: 30,
+  baseline: { mean_score: 61.6, decision_accuracy: 62.5, safety_pass_rate: 93.8 },
+  advanced: { mean_score: 94.4, decision_accuracy: 93.8, safety_pass_rate: 100 },
+  improvement_points: 32.8,
   cases: [],
 };
 
@@ -20,6 +20,7 @@ const esc = (v) =>
 
 let report = FALLBACK;
 let catalog = null; // data/cases.json, used only for incident packets + tool catalog
+let ablation = null; // artifacts/ablation.json, component decomposition
 let selected = 0;
 let stepIndex = 0;
 let highlight = null; // "source:line" to pulse in the evidence step
@@ -78,7 +79,34 @@ function renderMetrics() {
   });
 }
 
-// ---------- overview: all twelve at a glance ----------
+// ---------- ablation: where the improvement comes from ----------
+
+function renderAblation() {
+  const panel = $("ablation");
+  if (!panel) return;
+  const d = ablation && ablation.decomposition;
+  if (!d) { panel.hidden = true; return; }
+  panel.hidden = false;
+  const delta = Math.round((d.advanced.total - d.baseline.total) * 10) / 10;
+  $("ablation-eyebrow").textContent = `Where the +${delta} comes from`;
+  const body = $("decomp-body");
+  body.replaceChildren();
+  [["Baseline", d.baseline], ["SignalRoom", d.advanced]].forEach(([name, v]) => {
+    const row = document.createElement("div");
+    row.className = "decomp-row";
+    row.innerHTML = `
+      <span class="decomp-label">${esc(name)}</span>
+      <div class="decomp-bar" role="img" aria-label="${esc(name)}: decision ${v.decision}, citations ${v.citation}, safety ${v.safety} of 100">
+        <span class="seg decision" style="width:${v.decision}%"></span>
+        <span class="seg citation" style="width:${v.citation}%"></span>
+        <span class="seg safety" style="width:${v.safety}%"></span>
+      </div>
+      <strong class="decomp-total">${v.total}</strong>`;
+    body.append(row);
+  });
+}
+
+// ---------- overview: all cases at a glance ----------
 
 function renderOverview() {
   const body = $("overview-body");
@@ -443,6 +471,7 @@ function wireControls() {
 
 function boot() {
   renderMetrics();
+  renderAblation();
   if (!report.cases.length) {
     $("overview-body").innerHTML = '<div class="empty-state">No evaluation artifact loaded. Serve the site (python3 signalroom.py serve) so the browser can read results.json.</div>';
     return;
@@ -455,7 +484,8 @@ function boot() {
 Promise.all([
   fetch("results.json").then((r) => (r.ok ? r.json() : Promise.reject())),
   fetch("../data/cases.json").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  fetch("../artifacts/ablation.json").then((r) => (r.ok ? r.json() : null)).catch(() => null),
 ])
-  .then(([data, cases]) => { report = data; catalog = cases; })
+  .then(([data, cases, ablate]) => { report = data; catalog = cases; ablation = ablate; })
   .catch(() => { report = FALLBACK; })
   .finally(boot);

@@ -10,6 +10,7 @@
     {"id": "feature_flag_query", "label": "Feature flag activated an expensive query path"},
     {"id": "disk_log_saturation", "label": "Verbose logging saturated local disk"},
     {"id": "clock_skew", "label": "Host clock skew invalidating authentication tokens"},
+    {"id": "thread_pool_starvation", "label": "Application thread pool starvation under load"},
     {"id": "abstain", "label": "Insufficient evidence; request a specific missing signal"}
   ],
   "tool_catalog": [
@@ -499,6 +500,188 @@
         ]
       },
       "ground_truth": {"diagnosis": "abstain", "support_sources": ["recent_changes", "service_logs", "dependency_health", "resource_metrics", "runtime_config"]}
+    },
+    {
+      "id": "inc-13",
+      "title": "Search errors climb right after a deploy that only touched logging",
+      "difficulty": "challenging",
+      "initial_packet": [
+        "Search-api error rate rose from 0.4% to 19% at 15:31 UTC.",
+        "A search-api release went out at 15:28 UTC, three minutes earlier.",
+        "Only queries that fan out to the indexer service fail; cached queries are fine.",
+        "Local CPU, memory, and thread pools on search-api look normal.",
+        "An operator is about to roll back the 15:28 release."
+      ],
+      "tools": {
+        "recent_changes": [
+          "15:28 search-api 2026.08.30.5 deployed to 100% of replicas.",
+          "Release diff touched only structured-logging fields; no query, client, or timeout code changed.",
+          "No indexer or network deployment is recorded in the incident window."
+        ],
+        "dependency_health": [
+          "15:29 indexer p95 rose from 210 ms to 3.9 s; error_rate 24%; status=degraded.",
+          "indexer upstream shard-3 reports disk pressure and rejected connections.",
+          "search-api to indexer connection pool healthy; no client-side saturation."
+        ],
+        "service_logs": [
+          "15:31 request=q1 upstream indexer timed out after 3000ms",
+          "15:31 request=q2 cache hit served in 40ms",
+          "No configuration reload or query-path error is logged on search-api."
+        ],
+        "resource_metrics": [
+          "15:31 search-api cpu=41% memory=52% threads=120/400.",
+          "15:31 search-api gc and heap nominal."
+        ],
+        "runtime_config": [
+          "search-api indexer_timeout_ms=3000 unchanged for 9 days.",
+          "No feature flags changed in the incident window."
+        ]
+      },
+      "ground_truth": {
+        "diagnosis": "upstream_latency",
+        "support_sources": [
+          "dependency_health",
+          "service_logs"
+        ]
+      }
+    },
+    {
+      "id": "inc-14",
+      "title": "A fraction of orders never receive a confirmation email",
+      "difficulty": "hard-abstention",
+      "initial_packet": [
+        "Since 11:00 UTC about 3% of completed orders have no confirmation email.",
+        "Order and payment flows report success; error rates are flat.",
+        "The email provider aggregate dashboard shows normal delivery and no incidents.",
+        "Per-message delivery tracing was disabled last week to cut logging cost.",
+        "Operators want to blame the email provider and open a vendor ticket."
+      ],
+      "tools": {
+        "recent_changes": [
+          "08-24 per-message delivery tracing sampling set to 0% to reduce log spend.",
+          "No email-service, template, or queue deployment in the incident window.",
+          "A marketing batch job began sending at 10:55, five minutes before onset."
+        ],
+        "dependency_health": [
+          "email provider aggregate accept rate 99.98%; no provider-side errors reported.",
+          "queue broker healthy; consumer lag near zero.",
+          "No single downstream shows a correlated failure signature."
+        ],
+        "service_logs": [
+          "order.completed events are present for affected and unaffected orders alike.",
+          "No email.send failure is logged; the send path emits no per-message result without tracing.",
+          "Affected orders share no tenant, region, or template in the available fields."
+        ],
+        "resource_metrics": [
+          "email-worker cpu=38% memory=44%; no saturation.",
+          "throughput steady before and after 11:00."
+        ],
+        "runtime_config": [
+          "email retry policy unchanged for 30 days.",
+          "delivery_tracing=disabled since 08-24."
+        ]
+      },
+      "ground_truth": {
+        "diagnosis": "abstain",
+        "support_sources": [
+          "recent_changes",
+          "service_logs",
+          "dependency_health",
+          "resource_metrics",
+          "runtime_config"
+        ]
+      }
+    },
+    {
+      "id": "inc-15",
+      "title": "Orders API stalls under a traffic spike while dependencies look fine",
+      "difficulty": "challenging",
+      "initial_packet": [
+        "Order-api p95 rose from 300 ms to 6.4 s at 09:12 UTC during a flash sale.",
+        "Downstream database and payment dependencies report healthy latency.",
+        "Requests queue on order-api and time out before reaching downstreams.",
+        "No deploy or configuration change occurred in the incident window.",
+        "An operator is considering restarting order-api pods."
+      ],
+      "tools": {
+        "resource_metrics": [
+          "09:12 order-api worker threads 200/200 saturated; request queue depth 1900 and rising.",
+          "09:12 order-api cpu=71% memory=58% heap nominal; no GC pauses.",
+          "downstream db pool utilization 30%; payment pool 25%."
+        ],
+        "dependency_health": [
+          "database p95 12 ms, error_rate 0%; healthy.",
+          "payment provider p95 180 ms, within norms.",
+          "no downstream reports degradation during the window."
+        ],
+        "service_logs": [
+          "09:12 request=o1 rejected: worker pool exhausted, queued 1.8s then timed out",
+          "09:12 request=o2 downstream calls never issued; no db or payment span recorded",
+          "No upstream timeout to a dependency is logged."
+        ],
+        "recent_changes": [
+          "No deploy, config, certificate, or feature-flag change in the last 24h.",
+          "Autoscaling reached max replicas at 09:10; no new pods added."
+        ],
+        "runtime_config": [
+          "order-api worker_threads=200 unchanged for 3 weeks.",
+          "connection pools to db and payment are larger than the worker pool."
+        ]
+      },
+      "ground_truth": {
+        "diagnosis": "thread_pool_starvation",
+        "support_sources": [
+          "resource_metrics",
+          "service_logs"
+        ]
+      }
+    },
+    {
+      "id": "inc-16",
+      "title": "Intermittent tail latency with no captured slow-request profile",
+      "difficulty": "hard-abstention",
+      "initial_packet": [
+        "Account-api p99 latency intermittently spikes to 4 s a few times per hour since 07:00 UTC.",
+        "p50 and p95 are normal; only sporadic requests are slow.",
+        "CPU, memory, GC, and downstream dependencies all look healthy in aggregate.",
+        "Continuous profiling and slow-request sampling are not enabled on this service.",
+        "Operators suspect a noisy neighbor but have no per-request evidence."
+      ],
+      "tools": {
+        "resource_metrics": [
+          "account-api cpu=40% memory=47%; no sustained saturation across the window.",
+          "GC pauses under 20 ms; no correlation with the latency spikes.",
+          "node-level metrics sampled at 60s granularity show nothing at spike times."
+        ],
+        "dependency_health": [
+          "database and cache aggregate latency healthy throughout.",
+          "no downstream shows a spike aligned to the account-api tail events.",
+          "network error counters are zero."
+        ],
+        "service_logs": [
+          "a few requests report total=4.0s with no slow downstream span attributed.",
+          "no error or timeout is logged for the slow requests.",
+          "request-level tracing captures start and end only; no in-request breakdown."
+        ],
+        "recent_changes": [
+          "no deploy, config, or feature-flag change in the last 48h.",
+          "continuous profiling remained disabled; slow-request sampling never enabled."
+        ],
+        "runtime_config": [
+          "profiling=disabled; slow_request_sampling=disabled.",
+          "no scheduled batch or cron overlaps the spike times."
+        ]
+      },
+      "ground_truth": {
+        "diagnosis": "abstain",
+        "support_sources": [
+          "recent_changes",
+          "service_logs",
+          "dependency_health",
+          "resource_metrics",
+          "runtime_config"
+        ]
+      }
     }
   ]
 }

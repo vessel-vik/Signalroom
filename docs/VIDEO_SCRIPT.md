@@ -61,5 +61,5 @@ Show the README changelog.
 
 ## 4:25–4:45 — Failure mode and hot take
 
-> “The main limitation is synthetic-case overfitting, so all twelve cases and every miss are committed. The next evaluation should be frozen by an external SRE before prompt tuning. My hot take is simple: abstention is the product. Reliability begins when the agent can prove it should not answer.”
+> “The main limitation is synthetic-case overfitting, so all sixteen cases and every miss are committed. The next evaluation should be frozen by an external SRE before prompt tuning. My hot take is simple: abstention is the product. Reliability begins when the agent can prove it should not answer.”
 

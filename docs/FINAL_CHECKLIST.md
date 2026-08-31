@@ -4,7 +4,7 @@ The public HackerEarth page lists the deadline as **31 August 2026, 18:00 UTC** 
 
 ## Already prepared
 
-- Complete local source, prompts, twelve synthetic cases, tests, and MIT license.
+- Complete local source, prompts, sixteen synthetic cases, tests, and MIT license.
 - Same-model baseline and advanced evaluation with full per-case trajectories.
 - Preserved pre-fix failure artifact and evidence-linked improvement changelog.
 - Reproduction guide with versions, commands, expected output, runtime, and cost.

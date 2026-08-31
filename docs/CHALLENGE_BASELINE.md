@@ -14,7 +14,7 @@ SignalRoom was designed against the official micro1 Agentic Workflows Hackathon 
 - A simple baseline and an advanced solution run on the same cases.
 - Agent use is purposeful: context, tools, verification, and orchestration only where they improve the result.
 - One primary metric is defined before evaluation.
-- Twelve cases include standard, challenging, and under-evidenced examples.
+- Sixteen cases include standard, challenging (adversarial-distractor), and under-evidenced examples.
 - Consequential actions remain simulated and human-approved.
 - All data is synthetic and shareable.
 - Exact commands, versions, runtime, cost, prompts, and trajectories are included.
@@ -26,7 +26,7 @@ SignalRoom was designed against the official micro1 Agentic Workflows Hackathon 
 | Agent Solution & Engineering | 30 | Hypotheses, read-only tools, exact citation checks, one feedback retry, approval gate |
 | End-to-End Quality | 20 | Finished decision brief and evidence dashboard |
 | Problem & User Value | 15 | On-call operator deciding under incomplete evidence |
-| Measured Improvement | 15 | Same-model 12-case baseline comparison |
+| Measured Improvement | 15 | Same-model 16-case baseline comparison |
 | Reproducibility | 15 | Standard-library Python, local Ollama, frozen data, exact commands |
 | Hot Take / Insights | 5 | Abstention is a capability, not a failure |
 

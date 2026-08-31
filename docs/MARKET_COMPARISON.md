@@ -30,7 +30,7 @@ That the industry is reacting to exactly this problem is evidence the problem is
 | Evidence | Model-generated reasoning chains and evidence prose | Every material claim must **resolve to an exact tool-output line** |
 | Verification | The model asserts its evidence; a human eyeballs it | A **deterministic verifier** (code, not an LLM) proves each citation exists, or the claim earns nothing |
 | Action safety | Approval gates and blast-radius limits (parity — the category has this too) | A **programmatic** approval gate: consequential verbs cannot pass without required approval |
-| Evaluation | Vendor accuracy figures, not independently reproducible | A **frozen, deterministic scorer** over all 12 cases, a hard abstention case, and its own pre-fix miss committed |
+| Evaluation | Vendor accuracy figures, not independently reproducible | A **frozen, deterministic scorer** over all 16 cases, three abstention cases, and committed misses |
 
 ### The wedge, in one line
 
@@ -43,7 +43,7 @@ Commercial AI-SRE optimizes to **always produce a verifiable-looking answer** an
 
 ## Where SignalRoom does not compete
 
-Stated plainly, because the honesty is what makes the rest credible. SignalRoom is a prototype: twelve synthetic frozen incidents, a local 7B model, and five simulated read-only tools — not a live integration with production telemetry at scale. It is **not** a claim to beat Datadog or Cleric on real incidents.
+Stated plainly, because the honesty is what makes the rest credible. SignalRoom is a prototype: sixteen synthetic frozen incidents, a local 7B model, and five simulated read-only tools — not a live integration with production telemetry at scale. It is **not** a claim to beat Datadog or Cleric on real incidents.
 
 The claim it does make: SignalRoom isolates and reproducibly demonstrates a reliability principle — **verifiable abstention plus deterministic citation resolution** — that the commercial category is moving toward but has not operationalized as an enforced, measured guarantee. A small, inspectable system can prove a property that a large opaque one only asserts.
 

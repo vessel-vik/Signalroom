@@ -375,3 +375,29 @@ footer { display: flex; justify-content: space-between; gap: 24px; padding: 26px
   .live-inner { grid-template-columns: 1fr; }
 }
 
+/* ---------- ablation decomposition panel ---------- */
+.ablation[hidden] { display: none; }
+.ablation { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line); }
+.ablation .eyebrow { margin-bottom: 18px; }
+.decomp { display: grid; gap: 12px; }
+.decomp-row { display: grid; grid-template-columns: 110px 1fr 44px; align-items: center; gap: 16px; }
+.decomp-label { font-size: 13px; }
+.decomp-bar { display: flex; height: 22px; background: var(--paper-2); overflow: hidden; }
+.seg { height: 100%; transition: width 900ms cubic-bezier(.22,.7,.2,1); }
+.seg.decision { background: var(--rust); }
+.seg.citation { background: var(--slate); }
+.seg.safety { background: var(--sage); }
+.decomp-total { font-family: var(--mono); text-align: right; }
+.decomp-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; color: var(--ink-soft); font-size: 12px; }
+.decomp-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.k { width: 11px; height: 11px; display: inline-block; }
+.k.decision { background: var(--rust); }
+.k.citation { background: var(--slate); }
+.k.safety { background: var(--sage); }
+.decomp-note { margin: 16px 0 0; color: var(--ink-soft); font-size: 12px; }
+.decomp-note code { font-family: var(--mono); font-size: 11px; }
+@media (max-width: 620px) {
+  .decomp-row { grid-template-columns: 76px 1fr 34px; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .seg { transition: none; } }
+

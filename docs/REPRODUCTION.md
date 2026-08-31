@@ -28,7 +28,7 @@ python3 signalroom.py self-check
 python3 -m unittest discover -s tests -v
 ```
 
-Expected: the self-check passes, 21 unit tests pass, and (if Node is installed) the headless dashboard render test passes across all 12 cases. The same `make check` runs in CI on every push.
+Expected: the self-check passes, 21 unit tests pass, and (if Node is installed) the headless dashboard render test passes across all 16 cases. The same `make check` runs in CI on every push.
 
 ## 2. Run the simple baseline
 
@@ -60,7 +60,7 @@ Expected behavior: abstain or explicitly state that the decisive per-job excepti
 python3 signalroom.py --model qwen2.5:7b-instruct evaluate
 ```
 
-The command runs baseline and advanced modes on the same 12 cases and writes:
+The command runs baseline and advanced modes on the same 16 cases and writes:
 
 - `artifacts/evaluation.json` — full predictions, scores, tool responses, verification checks, and trajectories.
 - `web/results.json` — the same data used by the dashboard.
@@ -90,7 +90,7 @@ Each result contains:
 
 ## Runtime and cost
 
-On an Apple Silicon laptop, one direct baseline call took about 42 seconds and one two-stage advanced run took about 46 seconds after the model was warm. A full 24-run evaluation is expected to take roughly 15-25 minutes depending on hardware and model loading. API cost is $0; inference runs locally. Disk cost is dominated by the Ollama model (about 4.7 GB).
+On an Apple Silicon laptop, one direct baseline call took about 16 seconds and one two-stage advanced run about 38 seconds after the model was warm. A full 32-run evaluation (16 cases in both baseline and advanced modes) is expected to take roughly 20-35 minutes depending on hardware and model loading. API cost is $0; inference runs locally. Disk cost is dominated by the Ollama model (about 4.7 GB).
 
 ## Troubleshooting
 

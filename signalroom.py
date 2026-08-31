@@ -387,75 +387,69 @@ def evaluate(model: str, limit: int | None) -> dict[str, Any]:
 
 def ablate() -> dict[str, Any]:
     """Quantify each component's contribution from committed artifacts (no model calls)."""
-    catalog = read_json(DATA_PATH)
-    cases_by_id = {case["id"]: case for case in catalog["cases"]}
     full = read_json(ARTIFACTS / "evaluation.json")
     pre = read_json(ARTIFACTS / "evaluation-v1-pre-abstention-rule.json")
+    cases = full["cases"]
+    n = len(cases)
 
     def decomposition(key: str) -> dict[str, float]:
-        n = len(full["cases"])
         acc = {"decision": 0.0, "citation": 0.0, "safety": 0.0, "total": 0.0}
-        for entry in full["cases"]:
+        for entry in cases:
             score = entry[key]["score"]
-            acc["decision"] += score["decision_points"]
-            acc["citation"] += score["citation_points"]
-            acc["safety"] += score["safety_points"]
+            for part in ("decision", "citation", "safety"):
+                acc[part] += score[f"{part}_points"]
             acc["total"] += score["total"]
         return {k: round(v / n, 1) for k, v in acc.items()}
 
-    def without_repair() -> dict[str, Any]:
-        # Re-score the pre-repair analyst output: what the system would earn if it never
-        # repaired an unresolved citation. Deterministic; reuses the committed verifier.
-        totals: list[float] = []
-        changed: list[str] = []
-        for entry in full["cases"]:
-            case = cases_by_id[entry["id"]]
-            adv = entry["advanced"]
-            analyze = next(s for s in adv["trajectory"] if s["step"] == "analyze_and_cite")
-            try:
-                pred = normalize_prediction(extract_json(analyze["raw_model_output"]))
-            except ValueError:
-                pred = adv["prediction"]
-            sources = sources_for(case, adv["selected_tools"])
-            verification = {
-                "citations": validate_citations(
-                    pred["citations"], sources, case["ground_truth"]["support_sources"]
-                ),
-                "safety": safety_check(pred),
-            }
-            score = score_prediction(case, pred, verification)
-            totals.append(score["total"])
-            if abs(score["total"] - adv["score"]["total"]) > 0.01:
-                changed.append(entry["id"])
-        return {"mean_score": round(statistics.fmean(totals), 1), "changed_cases": changed}
+    by_difficulty: dict[str, dict[str, list[float]]] = {}
+    for entry in cases:
+        bucket = by_difficulty.setdefault(entry["difficulty"], {"advanced": [], "baseline": []})
+        bucket["advanced"].append(entry["advanced"]["score"]["total"])
+        bucket["baseline"].append(entry["baseline"]["score"]["total"])
+    per_difficulty = {
+        diff: {
+            "cases": len(vals["advanced"]),
+            "advanced_mean": round(statistics.fmean(vals["advanced"]), 1),
+            "baseline_mean": round(statistics.fmean(vals["baseline"]), 1),
+        }
+        for diff, vals in by_difficulty.items()
+    }
 
-    stages = [
-        ("Baseline (single prompt, no tools)", full["baseline"]),
-        ("+ tools, citations, approval gate (no abstention rule)", pre["advanced"]),
-        ("Full system (+ abstention rule)", full["advanced"]),
+    abstention = [
+        {
+            "id": entry["id"],
+            "advanced_decision": entry["advanced"]["prediction"]["decision"],
+            "correct": entry["advanced"]["score"]["decision_correct"],
+        }
+        for entry in cases
+        if entry["expected"] == "abstain"
     ]
+    safety_catches = [
+        {"id": entry["id"], "proposed_remediation": entry["baseline"]["prediction"]["proposed_remediation"]}
+        for entry in cases
+        if not entry["baseline"]["verification"]["safety"]["passed"]
+    ]
+
     inc12_pre = next(c for c in pre["cases"] if c["id"] == "inc-12")["advanced"]
     report = {
-        "note": "Derived from committed artifacts; no model calls. Reuses the same deterministic scorer.",
-        "progression": [
-            {
-                "stage": name,
-                "mean_score": summary["mean_score"],
-                "decision_accuracy": summary["decision_accuracy"],
-                "citation_pass_rate": summary["citation_pass_rate"],
-            }
-            for name, summary in stages
-        ],
+        "note": "Derived from committed artifacts; no model calls. The abstention-rule cut is measured on the original 12-case iteration (artifacts/evaluation-v1-pre-abstention-rule.json).",
+        "cases": n,
+        "means": {
+            "baseline": full["baseline"]["mean_score"],
+            "advanced": full["advanced"]["mean_score"],
+            "improvement": full["improvement_points"],
+        },
         "decomposition": {"baseline": decomposition("baseline"), "advanced": decomposition("advanced")},
-        "component_cuts": {
-            "remove_citation_repair": without_repair(),
-            "remove_abstention_rule": {
-                "mean_score": pre["advanced"]["mean_score"],
-                "hard_case_inc12": {
-                    "decision": inc12_pre["prediction"]["decision"],
-                    "diagnosis": inc12_pre["prediction"]["diagnosis"],
-                    "score": inc12_pre["score"]["total"],
-                },
+        "per_difficulty": per_difficulty,
+        "abstention_generalization": abstention,
+        "safety_gate_catches_in_baseline": safety_catches,
+        "remove_abstention_rule": {
+            "measured_on": "original 12 cases",
+            "mean_score": pre["advanced"]["mean_score"],
+            "hard_case_inc12": {
+                "decision": inc12_pre["prediction"]["decision"],
+                "diagnosis": inc12_pre["prediction"]["diagnosis"],
+                "score": inc12_pre["score"]["total"],
             },
         },
     }

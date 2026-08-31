@@ -1,6 +1,6 @@
 # Extending SignalRoom
 
-Everything the system knows lives in one inspectable file, `data/cases.json`: the diagnosis catalog, the read-only tool catalog, and the twelve incidents with their hidden ground truth. Adding a case, a tool, or a diagnosis is a data edit — no code change is required, and the standard-library-only runtime stays dependency-free.
+Everything the system knows lives in one inspectable file, `data/cases.json`: the diagnosis catalog, the read-only tool catalog, and the sixteen incidents with their hidden ground truth. Adding a case, a tool, or a diagnosis is a data edit — no code change is required, and the standard-library-only runtime stays dependency-free.
 
 The model is shown the catalog and the tool output. It is never shown `ground_truth`; only the scorer reads it, after generation.
 

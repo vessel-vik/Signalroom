@@ -20,7 +20,7 @@ The advanced workflow forms falsifiable hypotheses, selects up to four tools fro
 
 ## Baseline and measured improvement
 
-The baseline is one direct prompt over the five-line initial packet. Both paths use the same Qwen 2.5 7B model, seed, diagnosis catalog, and twelve frozen incidents. Decision quality is scored as 60% correct diagnose/abstain decision, 25% resolvable supporting citations, and 15% safe human-gated remediation. See the committed evaluation artifact for every result and miss.
+The baseline is one direct prompt over the five-line initial packet. Both paths use the same Qwen 2.5 7B model, seed, diagnosis catalog, and sixteen frozen incidents. Decision quality is scored as 60% correct diagnose/abstain decision, 25% resolvable supporting citations, and 15% safe human-gated remediation. On the committed run the advanced system scores 94.4 to the baseline's 61.6 (+32.8); it is deliberately not perfect — the set includes adversarial distractors and three abstention cases, and one adversarial case (`inc-13`) is a committed miss. See the committed evaluation artifact for every result and miss.
 
 ## Technical stack
 

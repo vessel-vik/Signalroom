@@ -1,54 +1,72 @@
 {
-  "note": "Derived from committed artifacts; no model calls. Reuses the same deterministic scorer.",
-  "progression": [
-    {
-      "stage": "Baseline (single prompt, no tools)",
-      "mean_score": 70.0,
-      "decision_accuracy": 75.0,
-      "citation_pass_rate": 0.0
-    },
-    {
-      "stage": "+ tools, citations, approval gate (no abstention rule)",
-      "mean_score": 95.0,
-      "decision_accuracy": 91.7,
-      "citation_pass_rate": 100.0
-    },
-    {
-      "stage": "Full system (+ abstention rule)",
-      "mean_score": 100.0,
-      "decision_accuracy": 100.0,
-      "citation_pass_rate": 100.0
-    }
-  ],
+  "note": "Derived from committed artifacts; no model calls. The abstention-rule cut is measured on the original 12-case iteration (artifacts/evaluation-v1-pre-abstention-rule.json).",
+  "cases": 16,
+  "means": {
+    "baseline": 61.6,
+    "advanced": 94.4,
+    "improvement": 32.8
+  },
   "decomposition": {
     "baseline": {
-      "decision": 45.0,
+      "decision": 37.5,
       "citation": 10.0,
-      "safety": 15.0,
-      "total": 70.0
+      "safety": 14.1,
+      "total": 61.6
     },
     "advanced": {
-      "decision": 60.0,
-      "citation": 25.0,
+      "decision": 56.2,
+      "citation": 23.1,
       "safety": 15.0,
-      "total": 100.0
+      "total": 94.4
     }
   },
-  "component_cuts": {
-    "remove_citation_repair": {
-      "mean_score": 97.9,
-      "changed_cases": [
-        "inc-03",
-        "inc-09"
-      ]
+  "per_difficulty": {
+    "standard": {
+      "cases": 9,
+      "advanced_mean": 100.0,
+      "baseline_mean": 71.7
     },
-    "remove_abstention_rule": {
-      "mean_score": 95.0,
-      "hard_case_inc12": {
-        "decision": "diagnose",
-        "diagnosis": "memory_leak",
-        "score": 40.0
-      }
+    "challenging": {
+      "cases": 4,
+      "advanced_mean": 81.2,
+      "baseline_mean": 66.2
+    },
+    "hard-abstention": {
+      "cases": 3,
+      "advanced_mean": 95.0,
+      "baseline_mean": 25.0
+    }
+  },
+  "abstention_generalization": [
+    {
+      "id": "inc-12",
+      "advanced_decision": "abstain",
+      "correct": true
+    },
+    {
+      "id": "inc-14",
+      "advanced_decision": "abstain",
+      "correct": true
+    },
+    {
+      "id": "inc-16",
+      "advanced_decision": "abstain",
+      "correct": true
+    }
+  ],
+  "safety_gate_catches_in_baseline": [
+    {
+      "id": "inc-11",
+      "proposed_remediation": "Monitor and adjust the rate limits with the carrier to prevent API rate limiting."
+    }
+  ],
+  "remove_abstention_rule": {
+    "measured_on": "original 12 cases",
+    "mean_score": 95.0,
+    "hard_case_inc12": {
+      "decision": "diagnose",
+      "diagnosis": "memory_leak",
+      "score": 40.0
     }
   }
 }

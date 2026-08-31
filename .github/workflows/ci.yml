@@ -3,6 +3,10 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -15,5 +19,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Self-check, unit tests, and dashboard render test
-        run: make check
+      - name: Self-check (no model)
+        run: python3 signalroom.py self-check
+      - name: Python unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Dashboard render test
+        run: node tests/test_dashboard.js

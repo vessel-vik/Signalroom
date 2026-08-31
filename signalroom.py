@@ -385,6 +385,85 @@ def evaluate(model: str, limit: int | None) -> dict[str, Any]:
     return report
 
 
+def ablate() -> dict[str, Any]:
+    """Quantify each component's contribution from committed artifacts (no model calls)."""
+    catalog = read_json(DATA_PATH)
+    cases_by_id = {case["id"]: case for case in catalog["cases"]}
+    full = read_json(ARTIFACTS / "evaluation.json")
+    pre = read_json(ARTIFACTS / "evaluation-v1-pre-abstention-rule.json")
+
+    def decomposition(key: str) -> dict[str, float]:
+        n = len(full["cases"])
+        acc = {"decision": 0.0, "citation": 0.0, "safety": 0.0, "total": 0.0}
+        for entry in full["cases"]:
+            score = entry[key]["score"]
+            acc["decision"] += score["decision_points"]
+            acc["citation"] += score["citation_points"]
+            acc["safety"] += score["safety_points"]
+            acc["total"] += score["total"]
+        return {k: round(v / n, 1) for k, v in acc.items()}
+
+    def without_repair() -> dict[str, Any]:
+        # Re-score the pre-repair analyst output: what the system would earn if it never
+        # repaired an unresolved citation. Deterministic; reuses the committed verifier.
+        totals: list[float] = []
+        changed: list[str] = []
+        for entry in full["cases"]:
+            case = cases_by_id[entry["id"]]
+            adv = entry["advanced"]
+            analyze = next(s for s in adv["trajectory"] if s["step"] == "analyze_and_cite")
+            try:
+                pred = normalize_prediction(extract_json(analyze["raw_model_output"]))
+            except ValueError:
+                pred = adv["prediction"]
+            sources = sources_for(case, adv["selected_tools"])
+            verification = {
+                "citations": validate_citations(
+                    pred["citations"], sources, case["ground_truth"]["support_sources"]
+                ),
+                "safety": safety_check(pred),
+            }
+            score = score_prediction(case, pred, verification)
+            totals.append(score["total"])
+            if abs(score["total"] - adv["score"]["total"]) > 0.01:
+                changed.append(entry["id"])
+        return {"mean_score": round(statistics.fmean(totals), 1), "changed_cases": changed}
+
+    stages = [
+        ("Baseline (single prompt, no tools)", full["baseline"]),
+        ("+ tools, citations, approval gate (no abstention rule)", pre["advanced"]),
+        ("Full system (+ abstention rule)", full["advanced"]),
+    ]
+    inc12_pre = next(c for c in pre["cases"] if c["id"] == "inc-12")["advanced"]
+    report = {
+        "note": "Derived from committed artifacts; no model calls. Reuses the same deterministic scorer.",
+        "progression": [
+            {
+                "stage": name,
+                "mean_score": summary["mean_score"],
+                "decision_accuracy": summary["decision_accuracy"],
+                "citation_pass_rate": summary["citation_pass_rate"],
+            }
+            for name, summary in stages
+        ],
+        "decomposition": {"baseline": decomposition("baseline"), "advanced": decomposition("advanced")},
+        "component_cuts": {
+            "remove_citation_repair": without_repair(),
+            "remove_abstention_rule": {
+                "mean_score": pre["advanced"]["mean_score"],
+                "hard_case_inc12": {
+                    "decision": inc12_pre["prediction"]["decision"],
+                    "diagnosis": inc12_pre["prediction"]["diagnosis"],
+                    "score": inc12_pre["score"]["total"],
+                },
+            },
+        },
+    }
+    write_json(ARTIFACTS / "ablation.json", report)
+    print(json.dumps(report, indent=2))
+    return report
+
+
 def run_one(case_id: str, model: str, mode: str) -> dict[str, Any]:
     catalog = read_json(DATA_PATH)
     case = next((item for item in catalog["cases"] if item["id"] == case_id), None)
@@ -471,6 +550,7 @@ def main() -> None:
     run_parser.add_argument("--mode", choices=["baseline", "advanced"], default="advanced")
     eval_parser = sub.add_parser("evaluate", help="Run the fair baseline comparison")
     eval_parser.add_argument("--limit", type=int)
+    sub.add_parser("ablate", help="Quantify component contributions from committed artifacts")
     serve_parser = sub.add_parser("serve", help="Serve the evidence dashboard")
     serve_parser.add_argument("--port", type=int, default=8080)
     serve_parser.add_argument("--open", action="store_true", help="Open the dashboard in a browser")
@@ -480,6 +560,8 @@ def main() -> None:
         run_one(args.case_id, args.model, args.mode)
     elif args.command == "evaluate":
         evaluate(args.model, args.limit)
+    elif args.command == "ablate":
+        ablate()
     elif args.command == "serve":
         serve(args.port, args.open, args.model)
     else:

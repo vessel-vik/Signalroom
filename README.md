@@ -49,7 +49,7 @@ Run the complete comparison to populate the measured result:
 python3 signalroom.py --model qwen2.5:7b-instruct evaluate
 ```
 
-The committed evaluation artifact is at `artifacts/evaluation.json`; the dashboard reads the same artifact from `web/results.json`.
+The committed evaluation artifact is at `artifacts/evaluation.json`; the dashboard reads the same artifact from `web/results.json`. For a component-by-component breakdown of where the improvement comes from — and which components earn their keep by changing a decision rather than adding points — see [`docs/ABLATION.md`](docs/ABLATION.md) (`python3 signalroom.py ablate`).
 
 ## How it works
 
@@ -116,7 +116,7 @@ prompts/                   baseline, planner, and analyst instructions
 tests/test_signalroom.py   dependency-free checks for parser, citations, and safety
 artifacts/                 committed evaluation evidence and representative runs
 web/                       editorial evidence dashboard
-docs/                      reproduction, extension guide, trajectories, market comparison, video, and submission copy
+docs/                      reproduction, extension guide, ablation, trajectories, market comparison, video, and submission copy
 ```
 
 ## Improvement changelog

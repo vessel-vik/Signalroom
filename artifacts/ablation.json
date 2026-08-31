@@ -1,0 +1,54 @@
+{
+  "note": "Derived from committed artifacts; no model calls. Reuses the same deterministic scorer.",
+  "progression": [
+    {
+      "stage": "Baseline (single prompt, no tools)",
+      "mean_score": 70.0,
+      "decision_accuracy": 75.0,
+      "citation_pass_rate": 0.0
+    },
+    {
+      "stage": "+ tools, citations, approval gate (no abstention rule)",
+      "mean_score": 95.0,
+      "decision_accuracy": 91.7,
+      "citation_pass_rate": 100.0
+    },
+    {
+      "stage": "Full system (+ abstention rule)",
+      "mean_score": 100.0,
+      "decision_accuracy": 100.0,
+      "citation_pass_rate": 100.0
+    }
+  ],
+  "decomposition": {
+    "baseline": {
+      "decision": 45.0,
+      "citation": 10.0,
+      "safety": 15.0,
+      "total": 70.0
+    },
+    "advanced": {
+      "decision": 60.0,
+      "citation": 25.0,
+      "safety": 15.0,
+      "total": 100.0
+    }
+  },
+  "component_cuts": {
+    "remove_citation_repair": {
+      "mean_score": 97.9,
+      "changed_cases": [
+        "inc-03",
+        "inc-09"
+      ]
+    },
+    "remove_abstention_rule": {
+      "mean_score": 95.0,
+      "hard_case_inc12": {
+        "decision": "diagnose",
+        "diagnosis": "memory_leak",
+        "score": 40.0
+      }
+    }
+  }
+}
